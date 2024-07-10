@@ -19,7 +19,7 @@ async function initializeDatabase() {
             url TEXT
         )`);
         
-        console.log(`Databas connected and initialized`);
+        console.log(`Database connected and initialized`);
         return db;
     } catch (err) {
         console.error(`Error initializing database ${dbPath}: ${err.message}`);
