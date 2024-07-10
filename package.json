@@ -1,0 +1,10 @@
+{
+  "dependencies": {
+    "body-parser": "^1.20.2",
+    "express": "^4.19.2",
+    "nodemon": "^3.1.4",
+    "save-dev": "^0.0.1-security",
+    "sqlite": "^5.1.1",
+    "sqlite3": "^5.1.7"
+  }
+}
