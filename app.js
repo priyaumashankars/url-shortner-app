@@ -17,14 +17,22 @@ async function initializeDatabase() {
             filename: dbPath,
             driver: sqlite3.Database
         });
- 
+
         await db.exec(`CREATE TABLE IF NOT EXISTS users (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             fullName TEXT,
             Email TEXT UNIQUE,
             Password TEXT
         );`);
- 
+
+        await db.exec(`CREATE TABLE IF NOT EXISTS urls (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            shortId TEXT UNIQUE,
+            url TEXT,
+            userId INTEGER,  -- Add userId column here
+            FOREIGN KEY(userId) REFERENCES users(id)
+        );`);
+
         console.log('Database connected and initialized!');
         return db;
     } catch (err) {
@@ -32,6 +40,7 @@ async function initializeDatabase() {
         throw err;
     }
 }
+
  
 let dbPromise = initializeDatabase();
  
@@ -98,7 +107,27 @@ app.post('/s/:shortId', authenticateToken, async (req, res) => {
         res.status(500).json({ error: 'Error storing in database' });
     }
 });
- 
+app.post('/link-shortid', authenticateToken, async (req, res) => {
+    const { shortId } = req.body; // Assuming shortId is sent in the request body
+    const userId = req.user.id; // Get userId from authenticated user
+
+    try {
+        const db = await dbPromise;
+        const existingUrl = await db.get('SELECT * FROM urls WHERE shortId = ?', [shortId]);
+
+        if (existingUrl) {
+            return res.status(400).json({ error: 'ShortId is already linked to a user' });
+        }
+
+        await db.run('INSERT INTO urls (shortId, userId) VALUES (?, ?)', [shortId, userId]);
+        console.log(`Linked shortId ${shortId} to user ${userId}`);
+
+        res.json({ shortId, userId });
+    } catch (err) {
+        console.error(`Error linking shortId ${shortId} to user ${userId}: ${err.message}`);
+        res.status(500).json({ error: 'Error linking shortId to user' });
+    }
+});
 // Endpoint for user signup
 app.post('/signup', async (req, res) => {
     const { fullName, Email, Password } = req.body;

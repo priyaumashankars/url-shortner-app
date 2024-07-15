@@ -10,4 +10,6 @@
 # Endpoint to delete a user
 # Endpoint to update user information
 # protected endpoint
-# start server
+# shortId getting linked to a user
+# protected routes(jwt)
+# html page for login and sign up
