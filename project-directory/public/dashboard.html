@@ -1,0 +1,397 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Dashboard</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        table, th, td {
+            border: 1px solid #ddd;
+            padding: 8px;
+            text-align: left;
+        }
+        th {
+            background-color: #f2f2f2;
+        }
+        td.actions {
+            white-space: nowrap;
+        }
+        button {
+            padding: 6px 10px;
+            margin-right: 5px;
+            cursor: pointer;
+        }
+        button.delete {
+            color: red;
+        }
+        header {
+            background-color: #ff9100;
+            padding: 10px;
+            color: white;
+            text-align: center;
+        }
+        footer {
+            background-color: black;
+            color: white;
+            text-align: center;
+            padding: 10px;
+            position: fixed;
+            bottom: 0;
+            width: 100%;
+        }
+        .popup {
+            display: none;
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(190, 175, 35, 0.5);
+            z-index: 1000;
+        }
+        .popup-content {
+            background-color: white;
+            margin: 20% auto;
+            padding: 20px;
+            width: 60%;
+            border-radius: 5px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body>
+    <header class="p-3">
+        <div class="container-fluid d-flex justify-content-between align-items-center">
+            <h2 class="m-0">User Dashboard</h2>
+            <button id="logoutButton" class="btn btn-primary">Logout</button>
+        </div>
+    </header>
+
+    <div id="main-content" class="container mt-5">
+        <table id="urlTable" class="table">
+            <thead>
+                <tr>
+                    <th>Short ID</th>
+                    <th>URL</th>
+                    <th>Updated At</th>
+                    <th class="actions">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                <!-- Table rows will be dynamically populated -->
+            </tbody>
+        </table>
+    
+        <div id="editPopup" class="popup">
+            <div class="popup-content">
+                <h2>Edit URL</h2>
+                <form id="editUrlForm">
+                    <label for="editedUrl" class="form-label">New URL:</label>
+                    <input type="text" id="editedUrl" name="editedUrl" class="form-control" required pattern="https?://.+"><br><br>
+                    <button type="submit" class="btn btn-primary">Save Changes</button>
+                    <br>
+                </form>
+                <button onclick="closePopup()" class="btn btn-secondary">Cancel</button>
+            </div>
+        </div>
+
+        <form id="addUrlForm" class="mt-4">
+            <h3>Add URL</h3>
+            <div class="mb-3">
+                <label for="shortId" class="form-label">Short ID:</label>
+                <input type="text" id="shortId" name="shortId" class="form-control" required minlength="3" maxlength="20"><br>
+            </div>
+            <div class="mb-3">
+                <label for="url" class="form-label">URL:</label>
+                <input type="text" id="url" name="url" class="form-control" required pattern="https?://.+"><br>
+            </div>
+            <button type="submit" class="btn btn-primary">Add URL</button>
+        </form>
+    </div>
+    
+    <footer class="p-3">
+        <div class="container">
+            &copy; 2024 User Dashboard App
+        </div>
+    </footer>
+
+    <!-- Bootstrap JS and dependencies -->
+    <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', async () => {
+            const fullNameSpan = document.getElementById('fullName');
+            const logoutButton = document.getElementById('logoutButton');
+
+            // Event listener for logout button
+            logoutButton.addEventListener('click', () => {
+                // Clear token from localStorage
+                localStorage.removeItem('token');
+                // Redirect to login page
+                window.location.href = '/login'; // Adjust URL if needed
+            });
+
+            async function fetchFullName() {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Token not found');
+                }
+
+                try {
+                    const response = await fetch('/api/fullname', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        const errorMessage = await response.text();
+                        throw new Error(`Failed to fetch full name - ${errorMessage}`);
+                    }
+
+                    const data = await response.json();
+                    return data.fullName; // Assuming API returns { fullName: 'John Doe' }
+                } catch (error) {
+                    throw new Error(`Failed to fetch full name - ${error.message}`);
+                }
+            }
+
+            try {
+                const fullName = await fetchFullName();
+
+                if (fullNameSpan) {
+                    fullNameSpan.textContent = fullName;
+                }
+            } catch (error) {
+                console.error('Error fetching full name:', error.message);
+                alert('Failed to fetch full name. Please check your network connection and try again.');
+            }
+        });
+
+        async function deleteUrl(shortId) {
+            try {
+                const token = localStorage.getItem('token');
+                if (!token) {
+                    throw new Error('Token not found');
+                }
+
+                const response = await fetch(`http://localhost:3000/s/${shortId}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Failed to delete URL');
+                }
+
+                // Remove the row from the table
+                const tableRow = document.querySelector(`#urlTable tbody tr td:nth-child(1):contains(${shortId})`).parentNode;
+                tableRow.parentNode.removeChild(tableRow);
+
+                alert('URL deleted successfully');
+                location.reload();
+
+            } catch (error) {
+                console.error('Error deleting URL:', error.message);
+                alert('Failed to delete URL.');
+                location.reload();
+            }
+        }
+
+        function editUrl(shortId) {
+            // Find the table row based on shortId
+            const tableRows = document.querySelectorAll('#urlTable tbody tr');
+
+            let rowToUpdate = null;
+            for (let row of tableRows) {
+                const shortIdCell = row.querySelector('td:first-child');
+                if (shortIdCell.textContent.trim() === shortId) {
+                    rowToUpdate = row;
+                    break;
+                }
+            }
+
+            if (!rowToUpdate) {
+                console.error(`Row with shortId ${shortId} not found`);
+                return;
+            }
+
+            // Pre-fill the edit form fields with existing data
+            const existingUrl = rowToUpdate.querySelector('td:nth-child(2) a').getAttribute('href');
+            document.getElementById('editedUrl').value = existingUrl;
+
+            // Display the edit popup
+            const editPopup = document.getElementById('editPopup');
+            editPopup.style.display = 'block';
+
+            // Set up the form submission handler (if not already set)
+            const editUrlForm = document.getElementById('editUrlForm');
+            editUrlForm.onsubmit = async (event) => {
+                event.preventDefault();
+
+                const editedUrl = document.getElementById('editedUrl').value.trim();
+
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        throw new Error('Token not found');
+                    }
+
+                    const response = await fetch(`http://localhost:3000/s/${shortId}`, {
+                        method: 'PUT',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ url: editedUrl })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to edit URL');
+                    }
+
+                    // Update UI: Update the URL in the table row
+                    rowToUpdate.querySelector('td:nth-child(2) a').href = editedUrl;
+                    rowToUpdate.querySelector('td:nth-child(2) a').textContent = editedUrl;
+
+                    alert('URL edited successfully');
+                    closePopup(); // Close the popup after successful edit
+                    location.reload();
+
+                } catch (error) {
+                    console.error('Error editing URL:', error.message);
+                    alert('Failed to edit URL.');
+                    location.reload();
+                }
+            };
+        }
+
+        // Function to close the edit popup
+        function closePopup() {
+            const editPopup = document.getElementById('editPopup');
+            editPopup.style.display = 'none';
+            document.getElementById('editedUrl').value = ''; // Clear the input field when popup is closed
+        }
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const tableBody = document.querySelector('#urlTable tbody');
+            const addUrlForm = document.getElementById('addUrlForm');
+            const fullNameSpan = document.getElementById('fullName');
+
+            // Function to fetch and populate data
+            async function fetchAndPopulateData() {
+                try {
+                    // Retrieve token from local storage
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        throw new Error('Token not found');
+                    }
+
+                    // Fetch user-specific data
+                    const response = await fetch('/urls', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+
+                    if (!response.ok) {
+                        throw new Error('Failed to fetch user data');
+                    }
+
+                    const userData = await response.json();
+
+                    // Populate table with user's data
+                    userData.forEach(urlData => {
+                        const newRow = document.createElement('tr');
+                        newRow.innerHTML = `
+                            <td>${urlData.shortId}</td>
+                            <td><a href="${urlData.url}" target="_blank">${urlData.url}</a></td>
+                            <td>${new Date(urlData.updatedAt).toLocaleString()}</td>
+                            <td class="actions">
+                                <button onclick="editUrl('${urlData.shortId}')" class="btn btn-primary">Edit</button>
+                                <button onclick="deleteUrl('${urlData.shortId}')" class="btn btn-danger">Delete</button>
+                            </td>
+                        `;
+                        tableBody.appendChild(newRow);
+                    });
+
+                } catch (error) {
+                    console.error('Error fetching and populating data:', error.message);
+                    alert('Failed to fetch user data.');
+                }
+            }
+
+            // Initial population of data
+            fetchAndPopulateData();
+
+            // Handle form submission to add a new URL
+            addUrlForm.addEventListener('submit', async (event) => {
+                event.preventDefault();
+
+                const shortId = document.getElementById('shortId').value.trim();
+                const url = document.getElementById('url').value.trim();
+
+                try {
+                    const token = localStorage.getItem('token');
+                    if (!token) {
+                        throw new Error('Token not found');
+                    }
+
+                    const response = await fetch(`http://localhost:3000/s/${shortId}`, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({ url })
+                    });
+
+                    if (!response.ok) {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Failed to add URL');
+                    }
+
+                    const responseData = await response.json();
+
+                    // Update UI: Add the new URL to the table
+                    const newRow = document.createElement('tr');
+                    newRow.innerHTML = `
+                        <td>${shortId}</td>
+                        <td><a href="${url}" target="_blank">${url}</a></td>
+                        <td>${new Date().toLocaleString()}</td>
+                        <td class="actions">
+                            <button onclick="editUrl('${shortId}')" class="btn btn-primary">Edit</button>
+                            <button onclick="deleteUrl('${shortId}')" class="btn btn-danger">Delete</button>
+                        </td>
+                    `;
+                    tableBody.appendChild(newRow);
+
+                    // Reset the form
+                    addUrlForm.reset();
+
+                } catch (error) {
+                    console.error('Error adding URL:', error.message);
+                    alert('Failed to add URL.');
+                }
+            });
+        });
+    </script>
+</body>
+</html>
