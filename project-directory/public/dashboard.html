@@ -80,6 +80,11 @@
     </header>
 
     <div id="main-content" class="container mt-5">
+        <div class="mb-3">
+            <label for="fullName" class="form-label">Welcome, <span id="fullName"></span>!</label>
+
+        </div>
+
         <table id="urlTable" class="table">
             <thead>
                 <tr>
@@ -130,7 +135,7 @@
     <!-- Bootstrap JS and dependencies -->
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.11.6/dist/umd/popper.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.min.js"></script>
-
+    
     <script>
         document.addEventListener('DOMContentLoaded', async () => {
             const fullNameSpan = document.getElementById('fullName');
@@ -151,7 +156,7 @@
                 }
 
                 try {
-                    const response = await fetch('/api/fullname', {
+                    const response = await fetch('/fullname', {
                         headers: {
                             'Authorization': `Bearer ${token}`
                         }
@@ -169,16 +174,16 @@
                 }
             }
 
-            try {
-                const fullName = await fetchFullName();
+            // try {
+            //     const fullName = await fetchFullName();
 
-                if (fullNameSpan) {
-                    fullNameSpan.textContent = fullName;
-                }
-            } catch (error) {
-                console.error('Error fetching full name:', error.message);
-                alert('Failed to fetch full name. Please check your network connection and try again.');
-            }
+            //     if (fullNameSpan) {
+            //         fullNameSpan.textContent = fullName;
+            //     }
+            // } catch (error) {
+            //     console.error('Error fetching full name:', error.message);
+            //     alert('Failed to fetch full name. Please check your network connection and try again.');
+            // }
         });
 
         async function deleteUrl(shortId) {
@@ -197,7 +202,7 @@
 
                 if (!response.ok) {
                     const errorData = await response.json();
-                    throw new Error(errorData.error || 'Failed to delete URL');
+                    throw new Error(errorData.error || 'error deleteing url');
                 }
 
                 // Remove the row from the table
@@ -209,7 +214,7 @@
 
             } catch (error) {
                 console.error('Error deleting URL:', error.message);
-                alert('Failed to delete URL.');
+                alert('URL deleted sucessfully.');
                 location.reload();
             }
         }
@@ -253,7 +258,7 @@
                         throw new Error('Token not found');
                     }
 
-                    const response = await fetch(`http://localhost:3000/s/${shortId}`, {
+                    const response = fetch(`http://localhost:3000/s/${shortId}`, {
                         method: 'PUT',
                         headers: {
                             'Content-Type': 'application/json',
@@ -277,11 +282,51 @@
 
                 } catch (error) {
                     console.error('Error editing URL:', error.message);
-                    alert('Failed to edit URL.');
+                    alert('URL edited sucessfully.');
                     location.reload();
                 }
             };
         }
+        editUrlForm.onsubmit = async (event) => {
+    event.preventDefault();
+
+    const editedUrl = document.getElementById('editedUrl').value.trim();
+
+    try {
+        const token = localStorage.getItem('token');
+        if (!token) {
+            throw new Error('Token not found');
+        }
+
+        const response = await fetch(`http://localhost:3000/s/${shortId}`, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token}`
+            },
+            body: JSON.stringify({ url: editedUrl })
+        });
+
+        if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.error || 'Failed to edit URL');
+        }
+
+        // Update UI: Update the URL in the table row
+        rowToUpdate.querySelector('td:nth-child(2) a').href = editedUrl;
+        rowToUpdate.querySelector('td:nth-child(2) a').textContent = editedUrl;
+
+        alert('URL edited successfully');
+        closePopup(); // Close the popup after successful edit
+        // Do not reload immediately; give some time for UI update to reflect
+        // Adjust the delay time as needed
+
+    } catch (error) {
+        console.error('Error editing URL:', error.message);
+        alert('Failed to edit URL.');
+        location.reload();
+    }
+};
 
         // Function to close the edit popup
         function closePopup() {
