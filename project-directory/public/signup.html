@@ -1,3 +1,5 @@
+
+ 
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -57,14 +59,14 @@
     <script>
         const signupForm = document.getElementById('signupForm');
         const errorMessage = document.getElementById('errorMessage');
- 
+    
         signupForm.addEventListener('submit', async function(event) {
             event.preventDefault();
- 
+    
             const fullName = signupForm.fullName.value;
             const Email = signupForm.Email.value;
             const Password = signupForm.Password.value;
- 
+    
             try {
                 const response = await fetch('/signup', {
                     method: 'POST',
@@ -73,26 +75,37 @@
                     },
                     body: JSON.stringify({ fullName, Email, Password })
                 });
- 
+    
                 if (!response.ok) {
                     const errorData = await response.json();
                     throw new Error(errorData.error || 'Signup failed');
                 }
+                
+                            // Inside the try block after successful response handling
+            const userData = await response.json();
+            const { token, userId } = userData;
  
-                const userData = await response.json();
-                const token = userData.token;
+            // Store token in localStorage (assuming you already have this)
+            localStorage.setItem('token', token);
  
-                // Store token in localStorage
-                localStorage.setItem('token', token);
+            // Store fullName and userId in localStorage
+            localStorage.setItem('fullName', fullName);
+            localStorage.setItem(userId, fullName); // Store userId as key and fullName as value
  
-                alert('Signup successful! Redirecting to login page.');
-                window.location.href = '/login.html'; // Redirect to login page after successful signup
+            // Alert and redirect
+            alert('Signup successful! Redirecting to login page.');
+            window.location.href = '/login.html'; // Redirect to login page after successful signup
+ 
+    
+                
             } catch (error) {
                 errorMessage.textContent = error.message;
                 errorMessage.style.display = 'block';
             }
         });
     </script>
+    
+    
 </body>
 </html>
  
