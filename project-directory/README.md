@@ -111,7 +111,5 @@ Before running the application, ensure you have the following installed:
  
 Contributions are welcome! If you find any issues or want to add new features, please fork the repository and submit a pull request.
  
-## License
- 
-This project is licensed under the MIT License - see the LICENSE file for details.
+
 
