@@ -33,6 +33,11 @@ app.use(cors());
 app.use(express.json());
 // Serve static files (CSS, JavaScript) from the 'public' directory
 app.use(express.static(path.join(__dirname, 'public')));
+
+// Redirect to login
+app.get('/', (req, res) => {
+    res.redirect('/login');
+});
 // Route to render login page
 app.get('/login', (req, res) => {
     res.render('login');
