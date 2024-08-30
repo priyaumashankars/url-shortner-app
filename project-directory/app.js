@@ -1,5 +1,5 @@
 
-
+require('dotenv').config();
 const { open } = require('sqlite');
 const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
@@ -7,10 +7,9 @@ const jwt = require('jsonwebtoken');
 const path = require('path');
 const cors = require('cors');
 const express = require('express');
+const port = process.env.PORT || 3000;
 const exphbs = require('express-handlebars');
- 
 const app = express();
-const port = 3000;
 const dbPath = path.join(__dirname, 'main.db');
 const jwtSecret = 'your_jwt_secret';
 app.engine('.hbs', exphbs.engine({
